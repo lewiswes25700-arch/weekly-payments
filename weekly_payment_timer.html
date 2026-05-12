@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weekly Payment Timer</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+    }
+
+    .card {
+      background: white;
+      padding: 32px;
+      border-radius: 18px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+      text-align: center;
+      width: min(90%, 420px);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+    }
+
+    .payment {
+      font-size: 42px;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+
+    .progress-container {
+      width: 100%;
+      height: 18px;
+      background: #ddd;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 18px 0;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #2f80ed;
+      transition: width 0.4s ease;
+    }
+
+    .countdown {
+      font-size: 22px;
+      margin-top: 18px;
+      font-weight: bold;
+    }
+
+    .small {
+      color: #555;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Weekly Payment Tracker</h1>
+
+    <div class="payment" id="paymentText">Payment 55 / 104</div>
+
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div id="percentText">0% complete</div>
+
+    <div class="countdown" id="countdownText">Loading...</div>
+
+    <div class="small" id="nextUpdateText"></div>
+  </div>
+
+  <script>
+    // Payment 55 happened on Monday, May 11, 2026.
+    // Every Monday after that, the payment number increases by 1.
+
+    const startDate = new Date("2026-05-11T00:00:00");
+    const startingPayment = 55;
+    const totalPayments = 104;
+
+    function getCurrentPayment(now) {
+      const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+      const weeksPassed = Math.floor((now - startDate) / msPerWeek);
+      return Math.min(startingPayment + Math.max(weeksPassed, 0), totalPayments);
+    }
+
+    function getNextMonday(now) {
+      const nextMonday = new Date(now);
+      nextMonday.setHours(0, 0, 0, 0);
+
+      const day = nextMonday.getDay(); // Sunday = 0, Monday = 1, etc.
+      let daysUntilMonday = (8 - day) % 7;
+
+      // If today is Monday but it is already after midnight, go to next Monday.
+      if (daysUntilMonday === 0 && now >= nextMonday) {
+        daysUntilMonday = 7;
+      }
+
+      nextMonday.setDate(nextMonday.getDate() + daysUntilMonday);
+      return nextMonday;
+    }
+
+    function formatCountdown(ms) {
+      const totalSeconds = Math.max(Math.floor(ms / 1000), 0);
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+    }
+
+    function updateTimer() {
+      const now = new Date();
+      const currentPayment = getCurrentPayment(now);
+      const nextMonday = getNextMonday(now);
+      const remaining = nextMonday - now;
+      const progressPercent = (currentPayment / totalPayments) * 100;
+
+      document.getElementById("paymentText").textContent = `Payment ${currentPayment} / ${totalPayments}`;
+      document.getElementById("progressBar").style.width = `${progressPercent}%`;
+      document.getElementById("percentText").textContent = `${progressPercent.toFixed(1)}% complete`;
+
+      if (currentPayment >= totalPayments) {
+        document.getElementById("countdownText").textContent = "All payments complete";
+        document.getElementById("nextUpdateText").textContent = "No more Monday updates needed.";
+      } else {
+        document.getElementById("countdownText").textContent = `Next update in: ${formatCountdown(remaining)}`;
+        document.getElementById("nextUpdateText").textContent = `Next payment: ${currentPayment + 1} / ${totalPayments} on ${nextMonday.toDateString()}`;
+      }
+    }
+
+    updateTimer();
+    setInterval(updateTimer, 1000);
+  </script>
+</body>
+</html>
